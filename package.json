@@ -11,7 +11,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cheerio": "^1.0.0",
+    "compromise": "^14.14.0",
     "express": "^4.19.2",
-    "expresssummary": "file:"
+    "expresssummary": "file:",
+    "puppeteer": "^23.0.2"
   }
 }
