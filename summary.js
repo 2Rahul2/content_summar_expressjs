@@ -54,7 +54,7 @@ async function scrapeGoogle(query) {
     return paragraphs
 }
 
-// module.exports = {
-//     scrapeGoogle,summarizeText
-//   };
+module.exports = {
+    scrapeGoogle,summarizeText
+  };
   
