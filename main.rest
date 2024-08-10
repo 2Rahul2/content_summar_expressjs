@@ -1,4 +1,4 @@
-POST  https://content-summar-expressjs.vercel.app/summary/
+POST  https://content-summar-expressjs.vercel.app/summary
 Content-Type: application/json
 
 {
