@@ -1,0 +1,6 @@
+POST  http://localhost:3000/summary/
+Content-Type: application/json
+
+{
+    "data": "what is web scraping"
+}
