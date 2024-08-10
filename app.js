@@ -14,6 +14,7 @@ app.get('/', (req, res) => {
 app.post('/summary', (req, res) => {
   try{
     const data = req.body.data; // Access the POST data
+    console.log('Received URL:', data);
     const para_count = 15
     let text_contents = ""
     summary.scrapeGoogle(data).then(text => {
