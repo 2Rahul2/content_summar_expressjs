@@ -1,6 +1,8 @@
-const puppeteer = require('puppeteer');
+const chromium = require('chrome-aws-lambda');
+const puppeteer = require('puppeteer-core');
 const cheerio = require('cheerio');
 const nlp = require('compromise');
+
 function summarizeText(text, sentenceCount) {
     const doc = nlp(text);
     const sentences = doc.sentences().out('array');
@@ -15,46 +17,60 @@ function summarizeText(text, sentenceCount) {
 
     return sentenceScores.slice(0, sentenceCount).map(item => item.sentence).join(' ');
 }
-// Example usage
-// summarizeText("Your long text content goes here...");
+
 async function scrapeGoogle(query) {
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    let browser = null;
+    try {
+        // Launch the browser with chrome-aws-lambda
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath,
+            headless: chromium.headless,
+        });
 
-    // Go to Google search results page
-    await page.goto(searchUrl);
+        const page = await browser.newPage();
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 
-    // Wait for search results to load and display the links
-    await page.waitForSelector('a h3');
+        // Go to Google search results page
+        await page.goto(searchUrl);
 
-    // Get the first search result link
-    const firstResultSelector = 'a h3';
-    const firstResultHandle = await page.$(firstResultSelector);
-    const firstResultLink = await page.evaluate(el => el.parentElement.href, firstResultHandle);
+        // Wait for search results to load and display the links
+        await page.waitForSelector('a h3');
 
-    console.log(`First result URL: ${firstResultLink}`);
+        // Get the first search result link
+        const firstResultSelector = 'a h3';
+        const firstResultHandle = await page.$(firstResultSelector);
+        const firstResultLink = await page.evaluate(el => el.parentElement.href, firstResultHandle);
 
-    // Go to the first search result page
-    await page.goto(firstResultLink);
+        console.log(`First result URL: ${firstResultLink}`);
 
-    // Extract the content of the page
-    const content = await page.content();
-    const $ = cheerio.load(content);
+        // Go to the first search result page
+        await page.goto(firstResultLink);
 
-    // Extract all paragraphs or other relevant content
-    let paragraphs = '';
-    $('p').each((i, el) => {
-        const text = $(el).text();
-        paragraphs += text + '\n\n'; // Add paragraph with spacing
-    });
+        // Extract the content of the page
+        const content = await page.content();
+        const $ = cheerio.load(content);
 
-    // console.log(`Extracted content:\n${paragraphs}`);
-    await browser.close();
-    return paragraphs
+        // Extract all paragraphs or other relevant content
+        let paragraphs = '';
+        $('p').each((i, el) => {
+            const text = $(el).text();
+            paragraphs += text + '\n\n'; // Add paragraph with spacing
+        });
+
+        await browser.close();
+        return paragraphs;
+    } catch (error) {
+        console.error('Error in scrapeGoogle:', error);
+        if (browser !== null) {
+            await browser.close();
+        }
+        throw error;
+    }
 }
 
 module.exports = {
-    scrapeGoogle,summarizeText
-  };
-  
+    scrapeGoogle,
+    summarizeText
+};

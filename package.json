@@ -12,9 +12,11 @@
   "description": "",
   "dependencies": {
     "cheerio": "^1.0.0",
+    "chrome-aws-lambda": "^10.1.0",
     "compromise": "^14.14.0",
     "express": "^4.19.2",
     "expresssummary": "file:",
-    "puppeteer": "^23.0.2"
+    "puppeteer": "^23.0.2",
+    "puppeteer-core": "^10.1.0"
   }
 }
