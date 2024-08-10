@@ -1,4 +1,4 @@
-POST  http://localhost:3000/summary/
+POST  https://content-summar-expressjs.vercel.app/summary/
 Content-Type: application/json
 
 {
