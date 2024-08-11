@@ -1,6 +1,6 @@
-POST  http://localhost:3000/summary
+POST  https://content-summar-expressjs.vercel.app/summary
 Content-Type: application/json
 
 {
-    "data": "what is web scraping"
+    "data": "what is django"
 }
