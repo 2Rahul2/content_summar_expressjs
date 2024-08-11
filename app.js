@@ -30,5 +30,7 @@ app.post('/summary', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
 });
-
+app.use(express.json());
+// Middleware to parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true }));
 module.exports = app
