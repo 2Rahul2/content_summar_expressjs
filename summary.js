@@ -1,8 +1,8 @@
-const chromium = require('chrome-aws-lambda');
-const puppeteer = require('puppeteer-core');
+// const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
-const nlp = require('compromise');
+const axios = require('axios');
 
+const nlp = require('compromise');
 function summarizeText(text, sentenceCount) {
     const doc = nlp(text);
     const sentences = doc.sentences().out('array');
@@ -17,60 +17,46 @@ function summarizeText(text, sentenceCount) {
 
     return sentenceScores.slice(0, sentenceCount).map(item => item.sentence).join(' ');
 }
+// Example usage
+// summarizeText("Your long text content goes here...");
 
 async function scrapeGoogle(query) {
-    let browser = null;
-    try {
-        // Launch the browser with chrome-aws-lambda
-        browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath,
-            headless: chromium.headless,
-        });
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 
-        const page = await browser.newPage();
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    // Fetch the HTML content of the search results page
+    const response = await axios.get(searchUrl);
+    const $ = cheerio.load(response.data);
 
-        // Go to Google search results page
-        await page.goto(searchUrl);
+    // Attempt to find the first result link
+    let firstResultLink = $('a h3').first().closest('a').attr('href');
 
-        // Wait for search results to load and display the links
-        await page.waitForSelector('a h3');
+    console.log(`Original First result URL: ${firstResultLink}`);
 
-        // Get the first search result link
-        const firstResultSelector = 'a h3';
-        const firstResultHandle = await page.$(firstResultSelector);
-        const firstResultLink = await page.evaluate(el => el.parentElement.href, firstResultHandle);
-
-        console.log(`First result URL: ${firstResultLink}`);
-
-        // Go to the first search result page
-        await page.goto(firstResultLink);
-
-        // Extract the content of the page
-        const content = await page.content();
-        const $ = cheerio.load(content);
-
-        // Extract all paragraphs or other relevant content
-        let paragraphs = '';
-        $('p').each((i, el) => {
-            const text = $(el).text();
-            paragraphs += text + '\n\n'; // Add paragraph with spacing
-        });
-
-        await browser.close();
-        return paragraphs;
-    } catch (error) {
-        console.error('Error in scrapeGoogle:', error);
-        if (browser !== null) {
-            await browser.close();
-        }
-        throw error;
+    if (!firstResultLink) {
+        throw new Error('No result link found');
     }
+
+    // Extract the actual URL from the Google redirect link
+    const parsedUrl = new URL(firstResultLink, 'https://www.google.com');
+    firstResultLink = parsedUrl.searchParams.get('q');
+
+    console.log(`Extracted First result URL: ${firstResultLink}`);
+
+    // Fetch the HTML content of the first result page
+    const resultResponse = await axios.get(firstResultLink);
+    const $$ = cheerio.load(resultResponse.data);
+
+    // Extract all paragraphs or other relevant content
+    let paragraphs = '';
+    $$('p').each((i, el) => {
+        const text = $$(el).text();
+        paragraphs += text + '\n\n'; // Add paragraph with spacing
+    });
+
+    return paragraphs;
 }
 
 module.exports = {
     scrapeGoogle,
     summarizeText
-};
+}
